@@ -10,8 +10,10 @@ const (
 	CanErrorRxPassive          = 0x0200 // CAN receiver passive
 	CanErrorRxOverflow         = 0x0800 // CAN receiver overflow
 	CanErrorWarnPassive        = 0x0303 // Combination
+	CanEffFlag          uint32 = 0x80000000
 	CanRtrFlag          uint32 = 0x40000000
 	CanSffMask          uint32 = 0x000007FF
+	CanEffMask          uint32 = 0x1FFFFFFF
 )
 
 // A CAN Bus interface
