@@ -12,17 +12,14 @@ var ErrUnsupportedBitRate = errors.New("unsupported SLCAN bit rate")
 
 type WriteFunc func(context.Context, []byte) error
 
-type FrameHandler func(context.Context, canopen.Frame) error
-
 // Controller owns Lawicel channel commands and frame encoding/dispatch while
 // leaving serial-port resource ownership to its caller.
 type Controller struct {
 	bitRateCode byte
 	write       WriteFunc
-	handle      FrameHandler
 }
 
-func NewController(bitRate int, write WriteFunc, handle FrameHandler) (*Controller, error) {
+func NewController(bitRate int, write WriteFunc) (*Controller, error) {
 	code, ok := BitRateCode(bitRate)
 	if !ok {
 		return nil, fmt.Errorf("%w: %d", ErrUnsupportedBitRate, bitRate)
@@ -30,10 +27,7 @@ func NewController(bitRate int, write WriteFunc, handle FrameHandler) (*Controll
 	if write == nil {
 		return nil, errors.New("SLCAN writer is required")
 	}
-	if handle == nil {
-		return nil, errors.New("SLCAN frame handler is required")
-	}
-	return &Controller{bitRateCode: code, write: write, handle: handle}, nil
+	return &Controller{bitRateCode: code, write: write}, nil
 }
 
 func BitRateCode(bitRate int) (byte, bool) {
@@ -61,17 +55,6 @@ func (c *Controller) Send(ctx context.Context, frame canopen.Frame) error {
 	}
 	if err := c.write(ctx, encoded); err != nil {
 		return fmt.Errorf("writing SLCAN frame: %w", err)
-	}
-	return nil
-}
-
-func (c *Controller) Receive(ctx context.Context, wire []byte) error {
-	frame, err := Decode(wire)
-	if err != nil {
-		return err
-	}
-	if err := c.handle(ctx, frame); err != nil {
-		return fmt.Errorf("handling SLCAN frame: %w", err)
 	}
 	return nil
 }
